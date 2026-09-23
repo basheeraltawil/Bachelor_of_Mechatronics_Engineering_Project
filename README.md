@@ -1,7 +1,7 @@
 # RoboCraft: Reconfigurable Planar Parallel Manipulator 🤖🔧
 
 <p align="center">
-  <img src="docs/figures/robot.jpeg" alt="RoboCraft reconfigurable planar manipulator" width="760">
+  <img src="robocraft_repo/docs/figures/robot.jpeg" alt="RoboCraft reconfigurable planar manipulator" width="760">
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ These values are project-specific data reported in the supplied thesis and shoul
 ### Complete robot
 
 <p align="center">
-  <img src="docs/figures/robot.jpeg" alt="Complete RoboCraft robot" width="760">
+  <img src="robocraft_repo/docs/figures/robot.jpeg" alt="Complete RoboCraft robot" width="760">
 </p>
 
 **RoboCraft — reconfigurable three-arm planar manipulator.**
@@ -57,7 +57,7 @@ These values are project-specific data reported in the supplied thesis and shoul
 ### Mechanical design
 
 <p align="center">
-  <img src="docs/figures/3d_design.png" alt="RoboCraft 3D mechanical design" width="760">
+  <img src="robocraft_repo/docs/figures/3d_design.png" alt="RoboCraft 3D mechanical design" width="760">
 </p>
 
 **3D/CAD design of the manipulator mechanism.**
@@ -65,7 +65,7 @@ These values are project-specific data reported in the supplied thesis and shoul
 ### Workspace analysis
 
 <p align="center">
-  <img src="docs/figures/workspace_analysis.png" alt="RoboCraft workspace analysis" width="760">
+  <img src="robocraft_repo/docs/figures/workspace_analysis.png" alt="RoboCraft workspace analysis" width="760">
 </p>
 
 **Workspace analysis used to evaluate the manipulator's reachable operating region.**
@@ -75,7 +75,7 @@ The thesis reports a dexterous workspace of **383,438 mm²** and a workspace per
 ### Motor-driver electronics
 
 <p align="center">
-  <img src="docs/figures/electronic_circuit_driver_schematic.png" alt="RoboCraft electronic circuit and motor driver schematic" width="760">
+  <img src="robocraft_repo/docs/figures/electronic_circuit_driver_schematic.png" alt="RoboCraft electronic circuit and motor driver schematic" width="760">
 </p>
 
 **Electronic circuit / motor-driver schematic used in the project.**
