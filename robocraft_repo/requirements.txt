@@ -1,0 +1,7 @@
+numpy
+sympy
+matplotlib
+pyserial
+smbus2
+RPi.GPIO
+opencv-python
