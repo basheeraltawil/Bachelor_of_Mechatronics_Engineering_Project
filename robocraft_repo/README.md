@@ -1,4 +1,4 @@
-# RoboCraft: Reconfigurable Planar Parallel Manipulator 🤖🔧
+# RoboCraft: Reconfigurable Planar Parallel Manipulator 
 
 <p align="center">
   <img src="docs/figures/robot.jpeg" alt="RoboCraft reconfigurable planar manipulator" width="760">
@@ -45,13 +45,6 @@ These values are project-specific data reported in the supplied thesis and shoul
 ---
 
 ## Visual overview
-
-### Complete robot
-
-<p align="center">
-  <img src="docs/figures/robot.jpeg" alt="Complete RoboCraft robot" width="760">
-</p>
-
 **RoboCraft — reconfigurable three-arm planar manipulator.**
 
 ### Mechanical design
