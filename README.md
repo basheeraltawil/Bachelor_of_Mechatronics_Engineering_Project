@@ -1,8 +1,5 @@
 # RoboCraft: Reconfigurable Planar Parallel Manipulator 🤖🔧
 
-<p align="center">
-  <img src="robocraft_repo/docs/figures/robot.jpeg" alt="RoboCraft reconfigurable planar manipulator" width="760">
-</p>
 
 <p align="center">
   <strong>RoboCraft — a reconfigurable three-arm planar manipulator</strong>
