@@ -1,34 +1,171 @@
 # RoboCraft: Reconfigurable Planar Parallel Manipulator 🤖🔧
 
+<p align="center">
+  <img src="docs/figures/robot.jpeg" alt="RoboCraft reconfigurable planar manipulator" width="760">
+</p>
+
+<p align="center">
+  <strong>RoboCraft — a reconfigurable three-arm planar manipulator</strong>
+</p>
+
 A mechatronics graduation project investigating a **multi-degree-of-freedom redundant, reconfigurable planar manipulator** built from three detachable 2-DOF serial manipulators.
 
-The original project combines mechanical design, kinematic and dynamic analysis, trajectory generation, embedded control, Raspberry Pi ↔ ATmega communication, image processing, obstacle avoidance, and task-level motion such as platform rotation and square drawing.
+The project combines mechanical design, kinematic and dynamic analysis, trajectory generation, embedded control, Raspberry Pi ↔ ATmega communication, image processing, obstacle avoidance, and task-level motion including platform rotation and square drawing.
 
-> **Project status:** academic/graduation-project code reconstructed from the supplied thesis and code appendix. The repository is organized for readability and reuse, but the legacy code has **not** been independently validated or made hardware-safe.
+> **Project status:** This repository contains academic/graduation-project source reconstructed from the supplied thesis and code appendix. It has been organized for readability and reuse, but the recovered legacy code has **not been independently validated or made hardware-safe**.
+
+---
+
+## Project overview
+
+The thesis describes a reconfigurable system in which three 2-DOF serial manipulators can operate independently or together as a synchronized parallel mechanism.
+
+### Key project data
+
+- **Three 2-DOF serial manipulators**
+- **6 motorized joints** supporting a **3-DOF task-space platform**
+- Reconfigurable operation as individual serial manipulators or as a parallel mechanism
+- Compactness constraint based on an **800 mm radius** footprint
+- Reported dexterous workspace of **383,438 mm²**
+- Reported link dimensions of **220 mm + 220 mm**
+- **60 mm hexagonal platform**
+- Reported workspace performance measure of **PC1 ≈ 0.95**
+- Minimum payload requirement of **0.200 kg**
+- Maximum allowable deflection of **2.5 mm**
+- DC motors with potentiometer-based position feedback
+- H-bridge motor driving
+- Raspberry Pi ↔ ATmega communication over **I²C**
+- Via-point and polynomial trajectory generation
+- OpenCV-based green-obstacle detection
+- Mechanical platform/gripper locking concept
+- Control discussion based on **Ziegler–Nichols tuning**
+
+These values are project-specific data reported in the supplied thesis and should not be interpreted as general specifications for the repository code.
+
+---
+
+## Visual overview
+
+### Complete robot
+
+<p align="center">
+  <img src="docs/figures/robot.jpeg" alt="Complete RoboCraft robot" width="760">
+</p>
+
+**RoboCraft — reconfigurable three-arm planar manipulator.**
+
+### Mechanical design
+
+<p align="center">
+  <img src="docs/figures/3d_design.png" alt="RoboCraft 3D mechanical design" width="760">
+</p>
+
+**3D/CAD design of the manipulator mechanism.**
+
+### Workspace analysis
+
+<p align="center">
+  <img src="docs/figures/workspace_analysis.png" alt="RoboCraft workspace analysis" width="760">
+</p>
+
+**Workspace analysis used to evaluate the manipulator's reachable operating region.**
+
+The thesis reports a dexterous workspace of **383,438 mm²** and a workspace performance measure of approximately **PC1 = 0.95**.
+
+### Motor-driver electronics
+
+<p align="center">
+  <img src="docs/figures/electronic_circuit_driver_schematic.png" alt="RoboCraft electronic circuit and motor driver schematic" width="760">
+</p>
+
+**Electronic circuit / motor-driver schematic used in the project.**
+
+> The README currently uses the four project figures prepared in `docs/figures/`. Additional thesis figures can be added later under the same directory without making the landing page unnecessarily long.
+
+---
 
 ## What the project does
 
-The thesis describes a system with:
+At a high level, the system follows this workflow:
 
-- **Three 2-DOF serial manipulators**
-- **6 motorized joints** for a **3-DOF task-space platform**
-- Reconfigurable operation as individual serial manipulators or as a synchronized parallel mechanism
-- A compactness constraint based on an **800 mm radius** footprint
-- A target dexterous workspace reported as **383,438 mm²**
-- Link lengths reported as **220 mm + 220 mm**
-- A **60 mm hexagonal platform**
-- A reported workspace performance measure of **PC1 ≈ 0.95**
-- A minimum payload requirement of **0.200 kg**
-- A maximum allowable deflection of **2.5 mm**
-- DC motors with potentiometer-based position feedback
-- H-bridge motor driving
-- Raspberry Pi and ATmega microcontroller communication over **I²C**
-- Trajectory generation using via points and polynomial interpolation
-- OpenCV-based green-obstacle detection
-- A mechanical locking concept for the platform/gripper
-- Control discussion based on **Ziegler–Nichols tuning**
+```text
+Task / target
+     │
+     ▼
+Trajectory generation + inverse kinematics
+     │
+     ▼
+Raspberry Pi master controller
+     │
+     │ I²C
+     ├──────────────┬──────────────┐
+     ▼              ▼              ▼
+ ATmega 1        ATmega 2       ATmega 3
+     │              │              │
+ Motors +        Motors +       Motors +
+potentiometers  potentiometers  potentiometers
+     │              │              │
+     └──────────────┼──────────────┘
+                    ▼
+        Reconfigurable robot mechanism
+```
 
-These values and descriptions are taken from the supplied thesis; they should be treated as project-specific design data rather than universal specifications.
+The exact electrical topology, I²C addressing, GPIO assignments and calibration values should be checked against the physical hardware before deployment.
+
+---
+
+## Kinematics and trajectory generation
+
+The thesis develops and discusses:
+
+- Denavit–Hartenberg parameterization
+- Forward kinematics
+- Jacobian-based velocity analysis
+- Singular configurations
+- Inverse kinematics
+- Dynamic and torque analysis
+- Trajectory generation
+
+The supplied trajectory code calculates an initial end-effector position, constructs a via point from geometric constraints, computes inverse-kinematic joint angles, and generates polynomial trajectory segments for the actuators.
+
+The appendix contains implementation-specific constants such as `a2 = 230` and `b2 = 230` in several code paths. These should not automatically be treated as the final mechanical dimensions reported in the thesis; they belong to the recovered implementation and may reflect a particular project stage.
+
+---
+
+## Main control tasks
+
+### 1. Trajectory generation
+
+The trajectory-generation program is intended to generate configurable manipulator motion from end-effector positions and orientations. It computes via points, inverse-kinematic joint values and polynomial joint trajectories.
+
+### 2. Raspberry Pi ↔ ATmega communication
+
+The Raspberry Pi side acts as the master in the communication workflow. The ATmega/Arduino side receives references, reads potentiometer feedback and controls the motor outputs.
+
+The recovered implementation contains project-specific communication addresses, calibration values and hardware assumptions. These should be verified before any hardware use.
+
+### 3. Pure rotation / reconfiguration
+
+The pure-rotation task is associated with platform attachment/detachment and reconfiguration. The appendix includes servo outputs and geometric calculations related to the hexagonal platform.
+
+### 4. Square drawing / pure translation
+
+The square-drawing task coordinates manipulator motion through successive square segments. The thesis presents this as an example task and discusses possible applications such as laser cutting.
+
+### 5. Image processing and obstacle avoidance
+
+The thesis also documents an OpenCV-based vision pipeline that:
+
+1. Captures frames from an external camera.
+2. Converts the image to HSV representation.
+3. Thresholds the green obstacle.
+4. Applies masking and median filtering.
+5. Detects image features/edges.
+6. Uses the detected obstacle information to support path generation.
+
+The supplied `codesappendix.pdf` is primarily focused on trajectory generation, Raspberry Pi/ATmega communication, pure rotation and square drawing; the vision implementation is documented separately in the thesis.
+
+---
 
 ## Repository structure
 
@@ -37,7 +174,12 @@ RoboCraft/
 ├── README.md
 ├── requirements.txt
 ├── docs/
-│   └── CODE_ORIGIN.md
+│   ├── CODE_ORIGIN.md
+│   └── figures/
+│       ├── 3d_design.png
+│       ├── electronic_circuit_driver_schematic.png
+│       ├── robot.jpeg
+│       └── workspace_analysis.png
 └── src/
     ├── trajectory/
     │   └── trajectory_generation.py
@@ -53,109 +195,31 @@ RoboCraft/
 
 | File | Role |
 |---|---|
-| `src/trajectory/trajectory_generation.py` | Via-point generation, inverse kinematics and polynomial trajectory generation for manipulator motion |
+| `src/trajectory/trajectory_generation.py` | Via-point generation, inverse kinematics and polynomial trajectory generation |
 | `src/communication/master_raspberry_pi.py` | Raspberry Pi side of the control/communication workflow |
 | `src/communication/slave_atmega.ino` | ATmega/Arduino-side I²C reception, potentiometer feedback and motor control |
 | `src/tasks/pure_rotation.py` | Platform pure-rotation / attachment-detachment task |
-| `src/tasks/drawing_square.py` | Coordinated second/third manipulator motion for square drawing |
+| `src/tasks/drawing_square.py` | Coordinated manipulator motion for the square-drawing task |
 
-## System architecture
+---
 
-```text
-                    ┌──────────────────────┐
-                    │     Task / Target    │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │ Trajectory Generation│
-                    │  + Inverse Kinematics│
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   Raspberry Pi       │
-                    │   Master Controller  │
-                    └──────────┬───────────┘
-                               │ I²C
-              ┌────────────────┼────────────────┐
-              ▼                ▼                ▼
-        ┌──────────┐     ┌──────────┐     ┌──────────┐
-        │ ATmega / │     │ ATmega / │     │ ATmega / │
-        │ Slave 1  │     │ Slave 2  │     │ Slave 3  │
-        └────┬─────┘     └────┬─────┘     └────┬─────┘
-             │                │                │
-          Motors +          Motors +        Motors +
-       potentiometers    potentiometers   potentiometers
-             └────────────────┼────────────────┘
-                              ▼
-                  Reconfigurable robot mechanism
-```
+## Hardware
 
-The exact electrical topology and addressing should be checked against the project's hardware build before deployment.
-
-## Kinematics and trajectory generation
-
-The thesis develops:
-
-- Denavit–Hartenberg parameterization
-- Forward kinematics
-- Jacobian-based velocity analysis
-- Singular-configuration discussion
-- Inverse kinematics
-- Dynamic/torque analysis
-- Trajectory generation
-
-The supplied trajectory code calculates an initial end-effector position, constructs a via point from geometric constraints, computes inverse-kinematic joint angles, and generates polynomial segments for the actuators.
-
-The appendix uses project-specific constants such as `a2 = 230` and `b2 = 230` in several code paths. These should not be confused with the thesis's reported design values unless the corresponding implementation stage is being reproduced.
-
-## Main control tasks
-
-### 1. Trajectory generation
-
-The trajectory-generation code is intended to make the path configurable through end-effector positions and orientations. It computes via points and joint trajectories for the manipulator.
-
-### 2. Communication
-
-The Raspberry Pi master uses I²C to exchange trajectory/feedback data with an ATmega slave. The slave reads potentiometers and drives motor outputs according to the received references.
-
-### 3. Pure rotation
-
-The pure-rotation task is associated with attaching/detaching and reconfiguring the platform. The appendix uses servo outputs and geometric calculations for the hexagonal platform.
-
-### 4. Drawing a square
-
-The square task coordinates the second and third manipulators and moves through successive square segments. The thesis discusses this as an example task and notes possible applications such as laser cutting.
-
-### 5. Image processing / obstacle avoidance
-
-The thesis also documents an OpenCV pipeline that:
-
-1. Captures frames from an external camera.
-2. Converts BGR/RGB imagery to HSV.
-3. Thresholds the green obstacle.
-4. Applies masking and median filtering.
-5. Detects image features/edges.
-6. Uses the detected obstacle information to support path generation.
-
-The image-processing implementation is documented in the thesis; the supplied code appendix is primarily focused on the trajectory, communication, rotation, and square-drawing programs.
-
-## Hardware and software
-
-### Hardware described by the thesis
+The thesis describes the following project hardware:
 
 - Three planar 2-DOF manipulator units
 - DC motors
-- Potentiometers for position feedback
+- Potentiometers for joint-position feedback
 - H-bridge motor drivers
 - ATmega microcontrollers
 - Raspberry Pi
-- Camera
+- External camera
 - Grippers and a mechanical platform-locking mechanism
 - Bearings, belts, shafts/gears and fabricated links
 
-### Software/tools described by the thesis
+## Software and engineering tools
+
+The project uses or discusses:
 
 - Python
 - NumPy
@@ -167,7 +231,7 @@ The image-processing implementation is documented in the thesis; the supplied co
 - OpenCV
 - SolidWorks
 - Mathematica
-- Arduino/ATmega development environment
+- Arduino/ATmega development tools
 
 Install the Python dependencies with:
 
@@ -175,29 +239,35 @@ Install the Python dependencies with:
 pip install -r requirements.txt
 ```
 
-Hardware-specific packages such as `RPi.GPIO` and `smbus2` are intended for Raspberry Pi environments.
+`RPi.GPIO` and `smbus2` are hardware-specific dependencies intended for Raspberry Pi environments.
 
-## Important: legacy-code warning
+---
 
-The source in this repository was reconstructed from a PDF appendix. It should therefore be regarded as **research/project source material**, not production firmware.
+## Legacy-code and hardware safety warning
+
+The source in this repository was reconstructed from a PDF appendix. It should therefore be treated as **research/project source material**, not production firmware.
 
 Before connecting motors:
 
-- verify every GPIO and I²C address;
-- verify motor direction and H-bridge wiring;
-- verify potentiometer calibration and reference offsets;
-- verify angle units and scaling;
-- test with motors mechanically unloaded;
-- add current/position/limit protections appropriate to the hardware;
-- check all trajectory limits;
-- confirm the code against the actual PCB and wiring;
-- never run the recovered code on a physical robot without a controlled test procedure.
+- Verify every GPIO assignment and I²C address.
+- Verify motor direction and H-bridge wiring.
+- Verify potentiometer calibration and reference offsets.
+- Verify angle units, scaling and sign conventions.
+- Test with motors mechanically unloaded.
+- Add appropriate current, position and limit protections.
+- Check all trajectory and workspace limits.
+- Confirm the software against the actual PCB and wiring.
+- Use a controlled hardware commissioning procedure.
 
-The appendix contains hard-coded calibration values and hardware addresses. These are project-specific and should be moved into configuration when the code is modernized.
+The recovered appendix contains hard-coded calibration values and hardware addresses. A future software revision should move these values into a dedicated configuration layer.
 
-## Suggested next cleanup
+**Do not run the recovered motor-control code on the physical robot without first validating the hardware interface and control limits.**
 
-For a maintainable research repository, the next iteration should separate:
+---
+
+## Development roadmap
+
+The current repository is an organized reconstruction of the project source. A natural next software iteration would separate the implementation into:
 
 ```text
 src/
@@ -210,98 +280,29 @@ src/
 └── hardware/
 ```
 
-and move constants such as link lengths, joint offsets, I²C addresses, GPIO pins, PWM limits and camera settings into a configuration module.
+Recommended improvements include:
 
-Unit tests should then cover forward/inverse kinematics, trajectory continuity, coordinate transforms and communication packet encoding before hardware testing.
+- Move link lengths, joint offsets, GPIO pins, I²C addresses, PWM limits and camera parameters into configuration.
+- Separate kinematics from hardware I/O.
+- Add explicit coordinate-frame and angle-unit conventions.
+- Add tests for forward/inverse kinematics and trajectory continuity.
+- Add tests for communication-packet encoding/decoding.
+- Add hardware-independent simulation before motor commissioning.
+- Add a dedicated vision module for obstacle detection and path generation.
+- Document the actual PCB, wiring and I²C topology used by the final build.
 
-## Figures recommended for the GitHub README
+---
 
-Do **not** put all thesis figures into the README. A repository README works better with a small visual story.
+## Project documentation
 
-### Recommended hero image — include this first
+The repository is based on the supplied graduation thesis and code appendix. The thesis covers the mechanical design, workspace analysis, kinematics, dynamics, electronics, trajectory generation, control and image-processing aspects of the project.
 
-**Final assembled robot / complete mechanism**
+`docs/CODE_ORIGIN.md` records the provenance and limitations of the reconstructed source files.
 
-Use the clearest photograph or SolidWorks assembly showing all three manipulators, the central platform, and the overall geometry.
+For a detailed technical description, the thesis should remain the primary reference for project-specific dimensions, performance values and design decisions.
 
-Suggested caption:
+---
 
-> **RoboCraft — reconfigurable three-arm planar manipulator**
+## Citation / attribution
 
-### Figure 2 — system concept
-
-Use the thesis figure that best shows the **three manipulators arranged around the platform**.
-
-Caption:
-
-> **Three detachable 2-DOF serial manipulators operating as a synchronized parallel mechanism.**
-
-### Figure 3 — workspace
-
-Use the **dexterous workspace** figure (thesis Figure 2.1.3 / related workspace figures).
-
-Caption:
-
-> **Dexterous workspace used to evaluate the reachable operating region of the manipulator.**
-
-This is especially valuable because the thesis reports a dexterous area of **383,438 mm²** and a PC1 value of approximately **0.95**.
-
-### Figure 4 — mechanical design / CAD
-
-Use a clean CAD view showing:
-
-- link geometry,
-- motor mounting,
-- bearings/shafts,
-- gripper,
-- platform,
-- or the complete assembly.
-
-Prefer one uncluttered CAD render over a collage of many manufacturing screenshots.
-
-### Figure 5 — electronics
-
-Use **one** clear electronics/driver-board figure showing the motor driver or control architecture.
-
-Avoid putting every Proteus/PCB manufacturing screenshot in the README. Those belong in `docs/`.
-
-### Figure 6 — trajectory/path result
-
-Use the figure showing the generated trajectory or the square-drawing task.
-
-A before/after pair is ideal:
-
-```text
-Start position → generated path → final position
-```
-
-### Figure 7 — obstacle avoidance / vision
-
-Use the strongest image-processing figure showing the green obstacle being segmented or the resulting path around it.
-
-This communicates one of the project's distinctive control features much better than a code screenshot.
-
-### Optional Figure 8 — platform locking / gripper
-
-Include this if the mechanical locking mechanism is an important part of the repository's story.
-
-## Recommended README image order
-
-```text
-1. Final robot photograph / assembly render
-2. System architecture or three-arm configuration
-3. Dexterous workspace
-4. CAD/mechanical design
-5. Electronics
-6. Trajectory or square-drawing result
-7. Green-obstacle image processing
-8. Optional platform-locking mechanism
-```
-
-For GitHub, I would keep the README to **5–7 images maximum** and place the remaining thesis figures in `docs/figures/`.
-
-## Source
-
-This repository organization is based on the supplied graduation thesis and code appendix. The thesis describes the project as a reconfigurable system composed of three serial manipulators that can also operate together as a parallel mechanism, with kinematics, dynamics, electronics, trajectory generation, image processing and control covered across the project. The thesis's appendix list identifies trajectory generation, Raspberry Pi/ATmega communication, master/slave code, pure rotation, and square-drawing code as the main software artifacts.
-
-See `docs/CODE_ORIGIN.md` for the provenance and limitations of the reconstructed source files.
+If you use or extend this repository in an academic context, cite the original graduation project/thesis and identify any modifications made to the recovered source code.
