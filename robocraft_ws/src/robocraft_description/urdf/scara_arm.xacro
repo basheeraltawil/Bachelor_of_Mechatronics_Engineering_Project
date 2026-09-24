@@ -1,0 +1,212 @@
+<?xml version="1.0"?>
+<!--
+  One RoboCraft SCARA arm.
+
+  J1 shoulder (revolute)  - DC motor in the column, helical gears 1.5M-25T  [thesis]
+  J2 elbow    (revolute)  - motor 2 behind J1 on link 1, timing belt       [thesis]
+  J3 quill    (prismatic) - ball-screw Z axis                               [industrial extension]
+  J4 wrist    (revolute)  - tool rotation                                   [industrial extension]
+  fingers     (prismatic) - rack & pinion servo gripper, mimic pair         [thesis]
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="robocraft_scara_arm" params="prefix parent base_x base_y base_yaw cfg">
+    <xacro:property name="A" value="${cfg['arm']}"/>
+    <xacro:property name="L" value="${cfg['limits']}"/>
+    <xacro:property name="l1" value="${A['link1_length']}"/>
+    <xacro:property name="l2" value="${A['link2_length']}"/>
+    <xacro:property name="lw" value="${A['link_width']}"/>
+    <xacro:property name="lt" value="${A['link_thickness']}"/>
+    <xacro:property name="tail" value="${A['link1_tail']}"/>
+    <xacro:property name="ch" value="${A['column_height']}"/>
+    <xacro:property name="hub" value="${A['hub_height']}"/>
+    <xacro:property name="gb" value="${A['gripper_body_height']}"/>
+    <xacro:property name="fl" value="${A['finger_length']}"/>
+    <xacro:property name="plate_t" value="${cfg['cell']['base_plate_thickness']}"/>
+
+    <!-- ============================== column ============================ -->
+    <joint name="${prefix}_base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}_base_link"/>
+      <origin xyz="${base_x} ${base_y} ${plate_t}" rpy="0 0 ${base_yaw}"/>
+    </joint>
+
+    <link name="${prefix}_base_link">
+      <visual>
+        <origin xyz="0 0 ${ch/2}"/>
+        <geometry><box size="${A['column_depth']} ${A['column_width']} ${ch}"/></geometry>
+        <xacro:rc_mat name="rc_gold"/>
+      </visual>
+      <!-- service window of the hollow column (electronics inside) -->
+      <xacro:box_visual size="0.002 ${A['column_width']*0.6} ${ch*0.55}"
+                        xyz="${-A['column_depth']/2-0.001} 0 ${ch*0.45}" material="rc_dark"/>
+      <!-- driver PCB (H-bridge + ATmega) on the back -->
+      <xacro:box_visual size="0.003 0.07 0.05" xyz="${-A['column_depth']/2-0.004} 0 ${ch*0.8}" material="rc_orange"/>
+      <!-- bearing housing + helical gear pair -->
+      <xacro:cyl_visual r="0.030" h="${hub}" xyz="0 0 ${ch+hub/2}" material="rc_steel"/>
+      <xacro:cyl_visual r="0.0195" h="0.012" xyz="0 0 ${ch+0.008}" material="rc_brass"/>
+      <xacro:cyl_visual r="0.0195" h="0.012" xyz="-0.037 0 ${ch+0.008}" material="rc_brass"/>
+      <!-- precision potentiometer J1 (Bourns 3590) -->
+      <xacro:cyl_visual r="0.011" h="0.020" xyz="-0.037 0.028 ${ch-0.004}" material="rc_blue"/>
+      <collision>
+        <origin xyz="0 0 ${(ch+hub)/2}"/>
+        <geometry><box size="${A['column_depth']} ${A['column_width']} ${ch+hub}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="1.5" x="${A['column_depth']}" y="${A['column_width']}" z="${ch}">
+        <origin xyz="0 0 ${ch/2}"/>
+      </xacro:box_inertial>
+    </link>
+
+    <!-- ============================== J1 / link 1 ======================== -->
+    <joint name="${prefix}_joint1" type="revolute">
+      <parent link="${prefix}_base_link"/>
+      <child link="${prefix}_link1"/>
+      <origin xyz="0 0 ${ch+hub}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${L['j1']['lower']}" upper="${L['j1']['upper']}"
+             velocity="${L['j1']['velocity']}" effort="${L['j1']['effort']}"/>
+      <dynamics damping="0.4" friction="0.05"/>
+    </joint>
+
+    <link name="${prefix}_link1">
+      <visual>
+        <origin xyz="${(l1-tail)/2} 0 ${lt/2}"/>
+        <geometry><box size="${l1+tail} ${lw} ${lt}"/></geometry>
+        <xacro:rc_mat name="rc_alu"/>
+      </visual>
+      <!-- shaft clamp, pulleys, timing belt (motor 2 -> elbow) -->
+      <xacro:cyl_visual r="0.022" h="${lt+0.004}" xyz="0 0 ${lt/2}" material="rc_steel"/>
+      <xacro:cyl_visual r="0.016" h="0.012" xyz="${-A['motor2_offset']} 0 ${lt+0.006}" material="rc_steel"/>
+      <xacro:cyl_visual r="0.020" h="0.012" xyz="${l1} 0 ${lt+0.006}" material="rc_steel"/>
+      <xacro:box_visual size="${l1+A['motor2_offset']} 0.012 0.003"
+                        xyz="${(l1-A['motor2_offset'])/2} 0.017 ${lt+0.006}" material="rc_wood"/>
+      <xacro:box_visual size="${l1+A['motor2_offset']} 0.012 0.003"
+                        xyz="${(l1-A['motor2_offset'])/2} -0.017 ${lt+0.006}" material="rc_wood"/>
+      <!-- motor 2 (12 V, 50:1 gear motor, 37 mm) hanging behind J1 -->
+      <xacro:cyl_visual r="0.0185" h="0.090" xyz="${-A['motor2_offset']} 0 -0.045" material="rc_brass"/>
+      <!-- J2 potentiometer -->
+      <xacro:cyl_visual r="0.011" h="0.015" xyz="${l1} 0 ${lt+0.020}" material="rc_blue"/>
+      <collision>
+        <origin xyz="${(l1-tail)/2} 0 ${lt/2}"/>
+        <geometry><box size="${l1+tail} ${lw} ${lt}"/></geometry>
+      </collision>
+      <!-- CoM moved towards J1 by the rear motor (thesis design goal) -->
+      <xacro:box_inertial m="${A['link1_mass']}" x="${l1+tail}" y="${lw}" z="${lt}">
+        <origin xyz="0.043 0 ${lt/2}"/>
+      </xacro:box_inertial>
+    </link>
+
+    <!-- ============================== J2 / link 2 ======================== -->
+    <joint name="${prefix}_joint2" type="revolute">
+      <parent link="${prefix}_link1"/>
+      <child link="${prefix}_link2"/>
+      <origin xyz="${l1} 0 ${lt/2-A['link2_drop']}" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${L['j2']['lower']}" upper="${L['j2']['upper']}"
+             velocity="${L['j2']['velocity']}" effort="${L['j2']['effort']}"/>
+      <dynamics damping="0.3" friction="0.05"/>
+    </joint>
+
+    <link name="${prefix}_link2">
+      <visual>
+        <origin xyz="${l2/2} 0 0"/>
+        <geometry><box size="${l2+0.04} ${lw} ${lt}"/></geometry>
+        <xacro:rc_mat name="rc_alu"/>
+      </visual>
+      <xacro:cyl_visual r="0.020" h="${lt+0.004}" xyz="0 0 0" material="rc_steel"/>
+      <!-- quill housing (ball screw nut + Z motor) -->
+      <xacro:box_visual size="0.050 0.050 0.050" xyz="${l2} 0 ${lt/2+0.025}" material="rc_gold"/>
+      <xacro:cyl_visual r="0.014" h="0.040" xyz="${l2-0.040} 0 ${lt/2+0.020}" material="rc_dark"/>
+      <collision>
+        <origin xyz="${l2/2} 0 0"/>
+        <geometry><box size="${l2+0.04} ${lw} ${lt}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${A['link2_mass']}" x="${l2}" y="${lw}" z="${lt}">
+        <origin xyz="0.15 0 0"/>
+      </xacro:box_inertial>
+    </link>
+
+    <!-- ============================== J3 quill ============================ -->
+    <joint name="${prefix}_joint3" type="prismatic">
+      <parent link="${prefix}_link2"/>
+      <child link="${prefix}_quill"/>
+      <origin xyz="${l2} 0 ${-lt/2-A['flange_offset']}" rpy="0 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <limit lower="${L['j3']['lower']}" upper="${L['j3']['upper']}"
+             velocity="${L['j3']['velocity']}" effort="${L['j3']['effort']}"/>
+      <dynamics damping="20.0" friction="1.0"/>
+    </joint>
+
+    <link name="${prefix}_quill">
+      <!-- splined shaft, visible above the housing when retracted -->
+      <xacro:cyl_visual r="0.008" h="0.200" xyz="0 0 0.100" material="rc_steel"/>
+      <xacro:cyl_visual r="0.020" h="0.006" xyz="0 0 -0.003" material="rc_dark"/>
+      <collision>
+        <origin xyz="0 0 0.040"/>
+        <geometry><cylinder radius="0.008" length="0.080"/></geometry>
+      </collision>
+      <xacro:cyl_inertial m="${A['quill_mass']}" r="0.01" h="0.2">
+        <origin xyz="0 0 0.05"/>
+      </xacro:cyl_inertial>
+    </link>
+
+    <!-- ============================== J4 wrist + gripper ================= -->
+    <joint name="${prefix}_joint4" type="revolute">
+      <parent link="${prefix}_quill"/>
+      <child link="${prefix}_wrist"/>
+      <origin xyz="0 0 -0.006" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${L['j4']['lower']}" upper="${L['j4']['upper']}"
+             velocity="${L['j4']['velocity']}" effort="${L['j4']['effort']}"/>
+      <dynamics damping="0.05" friction="0.01"/>
+    </joint>
+
+    <link name="${prefix}_wrist">
+      <!-- 3D-printed gripper body, servo and rack (thesis Fig. 3.3) -->
+      <xacro:box_visual size="0.032 0.075 ${gb-0.006}" xyz="0 0 ${-(gb-0.006)/2}" material="rc_wood"/>
+      <xacro:box_visual size="0.020 0.040 0.030" xyz="0.026 0 -0.018" material="rc_dark"/>
+      <xacro:box_visual size="0.006 0.070 0.006" xyz="-0.019 0 ${-gb+0.010}" material="rc_steel"/>
+      <collision>
+        <origin xyz="0 0 ${-(gb-0.006)/2}"/>
+        <geometry><box size="0.032 0.075 ${gb-0.006}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${A['wrist_mass']}" x="0.032" y="0.075" z="${gb}">
+        <origin xyz="0 0 ${-gb/2}"/>
+      </xacro:box_inertial>
+    </link>
+
+    <xacro:macro name="rc_finger" params="side sign">
+      <joint name="${prefix}_finger_${side}_joint" type="prismatic">
+        <parent link="${prefix}_wrist"/>
+        <child link="${prefix}_finger_${side}"/>
+        <origin xyz="0 ${sign*0.006} ${-gb+0.006}" rpy="0 0 0"/>
+        <axis xyz="0 ${sign} 0"/>
+        <limit lower="${L['finger']['lower']}" upper="${L['finger']['upper']}"
+               velocity="${L['finger']['velocity']}" effort="${L['finger']['effort']}"/>
+        <xacro:if value="${side == 'right'}">
+          <mimic joint="${prefix}_finger_left_joint" multiplier="1" offset="0"/>
+        </xacro:if>
+        <dynamics damping="0.5"/>
+      </joint>
+      <link name="${prefix}_finger_${side}">
+        <xacro:box_visual size="0.024 0.008 ${fl}" xyz="0 ${sign*0.004} ${-fl/2}" material="rc_wood"/>
+        <!-- rubber pad (friction insert, thesis) -->
+        <xacro:box_visual size="0.022 0.002 0.030" xyz="0 ${sign*0.0005} ${-fl+0.018}" material="rc_dark"/>
+        <xacro:box_inertial m="${A['finger_mass']}" x="0.024" y="0.008" z="${fl}">
+          <origin xyz="0 ${sign*0.004} ${-fl/2}"/>
+        </xacro:box_inertial>
+      </link>
+    </xacro:macro>
+    <xacro:rc_finger side="left" sign="1"/>
+    <xacro:rc_finger side="right" sign="-1"/>
+
+    <!-- tool centre point: between the finger pads -->
+    <joint name="${prefix}_tcp_joint" type="fixed">
+      <parent link="${prefix}_wrist"/>
+      <child link="${prefix}_tcp"/>
+      <origin xyz="0 0 ${-gb+0.006-fl+A['tcp_above_finger_tip']}" rpy="0 0 0"/>
+    </joint>
+    <link name="${prefix}_tcp"/>
+
+  </xacro:macro>
+</robot>

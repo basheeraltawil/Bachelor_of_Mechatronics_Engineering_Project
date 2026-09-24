@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- colours taken from the photographed prototype.  Every visual carries its
+       colour inline (xacro:rc_mat): Gazebo's URDF->SDF converter does not
+       resolve references to named, globally defined materials. -->
+  <xacro:property name="rc_colors" value="${dict(rc_gold='0.72 0.58 0.30 1.0', rc_alu='0.80 0.81 0.83 1.0', rc_dark='0.12 0.12 0.13 1.0', rc_brass='0.62 0.47 0.22 1.0', rc_blue='0.10 0.25 0.75 1.0', rc_red='0.80 0.10 0.08 1.0', rc_wood='0.82 0.68 0.48 1.0', rc_white='0.95 0.95 0.95 1.0', rc_steel='0.55 0.56 0.58 1.0', rc_orange='0.95 0.45 0.05 1.0')}"/>
+  <xacro:macro name="rc_mat" params="name">
+    <material name="${name}"><color rgba="${rc_colors[name]}"/></material>
+  </xacro:macro>
+
+  <!-- solid box inertia about its centre -->
+  <xacro:macro name="box_inertial" params="m x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12.0}" ixy="0" ixz="0"
+               iyy="${m*(x*x+z*z)/12.0}" iyz="0"
+               izz="${m*(x*x+y*y)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- solid cylinder (axis z) inertia about its centre -->
+  <xacro:macro name="cyl_inertial" params="m r h *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3*r*r+h*h)/12.0}" ixy="0" ixz="0"
+               iyy="${m*(3*r*r+h*h)/12.0}" iyz="0"
+               izz="${m*r*r/2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- visual-only cylinder helper -->
+  <xacro:macro name="cyl_visual" params="r h xyz rpy:='0 0 0' material">
+    <visual>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <geometry><cylinder radius="${r}" length="${h}"/></geometry>
+      <xacro:rc_mat name="${material}"/>
+    </visual>
+  </xacro:macro>
+
+  <xacro:macro name="box_visual" params="size xyz rpy:='0 0 0' material">
+    <visual>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <geometry><box size="${size}"/></geometry>
+      <xacro:rc_mat name="${material}"/>
+    </visual>
+  </xacro:macro>
+
+</robot>

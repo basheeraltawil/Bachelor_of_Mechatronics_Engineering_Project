@@ -8,6 +8,11 @@
   <strong>RoboCraft — a reconfigurable three-arm planar manipulator</strong>
 </p>
 
+> **2026 update:** the project has been rebuilt as a ROS 2 Humble / Gazebo workspace with
+> 4-axis industrial SCARA arms, simulation scenarios, vision and a real-hardware driver.
+> See [`../robocraft_ws`](../robocraft_ws) and the [main README](../README.md).
+> This folder keeps the original 2019 material.
+
 A mechatronics graduation project investigating a **multi-degree-of-freedom redundant, reconfigurable planar manipulator** built from three detachable 2-DOF serial manipulators.
 
 The project combines mechanical design, kinematic and dynamic analysis, trajectory generation, embedded control, Raspberry Pi ↔ ATmega communication, image processing, obstacle avoidance, and task-level motion including platform rotation and square drawing.

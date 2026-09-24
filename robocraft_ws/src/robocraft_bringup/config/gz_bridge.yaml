@@ -1,0 +1,57 @@
+# ros_gz_bridge configuration (Gazebo Fortress <-> ROS 2 Humble)
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: ignition.msgs.Clock
+  direction: GZ_TO_ROS
+
+# overhead camera (thesis image-processing camera)
+- ros_topic_name: /overhead_camera/image_raw
+  gz_topic_name: /overhead_camera/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: ignition.msgs.Image
+  direction: GZ_TO_ROS
+- ros_topic_name: /overhead_camera/camera_info
+  gz_topic_name: /overhead_camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: ignition.msgs.CameraInfo
+  direction: GZ_TO_ROS
+
+# ground-truth poses of all dynamic models/links (hex platform: child_frame_id "hex_platform")
+- ros_topic_name: /robocraft/world_poses
+  gz_topic_name: /world/robocraft/dynamic_pose/info
+  ros_type_name: tf2_msgs/msg/TFMessage
+  gz_type_name: ignition.msgs.Pose_V
+  direction: GZ_TO_ROS
+
+# grasp plugin commands / states
+- ros_topic_name: /robocraft/arm1/grasp_cmd
+  gz_topic_name: /robocraft/arm1/grasp_cmd
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: ROS_TO_GZ
+- ros_topic_name: /robocraft/arm2/grasp_cmd
+  gz_topic_name: /robocraft/arm2/grasp_cmd
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: ROS_TO_GZ
+- ros_topic_name: /robocraft/arm3/grasp_cmd
+  gz_topic_name: /robocraft/arm3/grasp_cmd
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: ROS_TO_GZ
+- ros_topic_name: /robocraft/arm1/grasp_state
+  gz_topic_name: /robocraft/arm1/grasp_state
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: GZ_TO_ROS
+- ros_topic_name: /robocraft/arm2/grasp_state
+  gz_topic_name: /robocraft/arm2/grasp_state
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: GZ_TO_ROS
+- ros_topic_name: /robocraft/arm3/grasp_state
+  gz_topic_name: /robocraft/arm3/grasp_state
+  ros_type_name: std_msgs/msg/String
+  gz_type_name: ignition.msgs.StringMsg
+  direction: GZ_TO_ROS

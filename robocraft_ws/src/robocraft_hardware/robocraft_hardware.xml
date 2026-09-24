@@ -1,0 +1,7 @@
+<library path="robocraft_hardware">
+  <class name="robocraft_hardware/RoboCraftI2CSystem"
+         type="robocraft_hardware::RoboCraftI2CSystem"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>Raspberry Pi I2C master for the three ATmega328 joint controllers of the RoboCraft cell.</description>
+  </class>
+</library>

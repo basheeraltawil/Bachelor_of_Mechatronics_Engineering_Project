@@ -1,0 +1,16 @@
+# colcon / ROS 2 build artefacts (machine specific - rebuild with `colcon build`)
+robocraft_ws/build/
+robocraft_ws/install/
+robocraft_ws/log/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# editors / OS
+.vscode/*
+!.vscode/settings.json
+*.swp
+.DS_Store

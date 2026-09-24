@@ -1,0 +1,73 @@
+# RoboCraft cell geometry — single source of truth.
+# Loaded by the xacro model (xacro.load_yaml), the kinematics library and the
+# control nodes. SI units (m, rad, kg, N, N·m) everywhere.
+#
+# Values marked [thesis] come from the graduation thesis (May 2019).
+# Values marked [ind] are the "industrialisation" extension added in this
+# workspace (4-axis SCARA with quill + wrist, realistic limits).
+
+cell:
+  base_plate_radius: 0.40          # [thesis] footprint circle, PC1 uses 0.8*pi*400^2
+  base_plate_thickness: 0.010
+  base_circle_radius: 0.320        # [thesis] 277.13 = 320*cos30, 160 = 320*sin30
+
+arms:
+  names: [arm1, arm2, arm3]
+  # Angular position of each column on the base circle (deg). The column
+  # yaw is chosen so that joint-zero points to the cell centre.
+  base_angles_deg: [-90.0, 30.0, 150.0]   # (0,-320), (277.13,160), (-277.13,160)
+
+arm:
+  # --- column -----------------------------------------------------------
+  column_width: 0.100              # [thesis] 100 x 80 mm column
+  column_depth: 0.080
+  column_height: 0.260             # top of column above plate
+  hub_height: 0.030                # helical gear / bearing stack
+  # --- links ------------------------------------------------------------
+  link1_length: 0.220              # [thesis] l1 = 220 mm
+  link2_length: 0.220              # [thesis] l2 = 220 mm
+  link_width: 0.025                # [thesis]
+  link_thickness: 0.020            # [thesis] from SolidWorks static study
+  link1_tail: 0.120                # motor-2 counterweight side (behind J1)
+  motor2_offset: 0.100             # [thesis] motor 2 is 100 mm behind J1
+  link2_drop: 0.025                # link2 hangs below link1 at the elbow
+  # --- quill (J3) / wrist (J4) / gripper [ind] ---------------------------
+  quill_travel: 0.170
+  flange_offset: 0.010             # flange below link2 bottom at q3 = 0
+  gripper_body_height: 0.040
+  finger_length: 0.060
+  tcp_above_finger_tip: 0.020
+  finger_stroke: 0.022             # per finger, rack & pinion [thesis]
+  # --- masses (kg) --------------------------------------------------------
+  link1_mass: 0.82                 # Al bar + motor 2 (210 g [thesis]) + pulleys
+  link2_mass: 0.54
+  quill_mass: 0.25
+  wrist_mass: 0.20
+  finger_mass: 0.02
+
+limits:
+  # DC motor [thesis]: 12 V, 50:1, 100 rpm no-load, 42 kg·cm stall (4.12 N·m),
+  # selected to deliver 16 kg·cm at 30 rpm.  We rate joints at 30 rpm.
+  j1: {lower: -2.62, upper: 2.62, velocity: 3.14, effort: 4.0}   # ±150°
+  j2: {lower: -2.53, upper: 2.53, velocity: 3.14, effort: 4.0}   # ±145°
+  j3: {lower: 0.0,   upper: 0.170, velocity: 0.20, effort: 120.0}
+  j4: {lower: -6.28, upper: 6.28, velocity: 6.28, effort: 1.0}
+  finger: {lower: 0.0, upper: 0.022, velocity: 0.05, effort: 20.0}
+
+platform:
+  # [thesis] hexagonal platform, 60 mm corner radius, 6 iron shafts (legs)
+  # on bearings; the upper plate acts as a brake ("lock mechanism").
+  leg_radius: 0.060
+  plate_radius: 0.075
+  plate_thickness: 0.010
+  leg_diameter: 0.012
+  leg_height: 0.080
+  mass: 0.35
+  initial_yaw_deg: 30.0            # one hexagon corner faces each column
+  grip_height: 0.070               # TCP z when gripping a leg
+  lift_height: 0.015               # lift before moving (clears plate + low obstacles)
+
+safety:
+  link_clearance: 0.035            # min distance between links on one layer
+  column_clearance: 0.070          # min TCP/elbow distance to a foreign column
+  speed_override: 0.6              # industrial "override %", 0..1

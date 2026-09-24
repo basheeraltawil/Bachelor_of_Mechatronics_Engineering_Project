@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!--
+  ros2_control description of the whole cell (one controller manager, 3 arms).
+
+  hardware:=mock    mock_components/GenericSystem (RViz only, perfect tracking)
+  hardware:=gazebo  gz_ros2_control/GazeboSimSystem (Gazebo Fortress physics)
+  hardware:=real    robocraft_hardware/RoboCraftI2CSystem (Raspberry Pi -> 3x ATmega over I2C)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- cmd: "position" (mock / real) or "velocity" (Gazebo: the trajectory
+       controller closes the position loop with P + velocity feed-forward) -->
+  <xacro:macro name="rc_joint_if" params="name initial cmd:=position">
+    <joint name="${name}">
+      <command_interface name="${cmd}"/>
+      <state_interface name="position"><param name="initial_value">${initial}</param></state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="rc_arm_if" params="prefix home cmd">
+    <xacro:rc_joint_if name="${prefix}_joint1" initial="${home[0]}" cmd="${cmd}"/>
+    <xacro:rc_joint_if name="${prefix}_joint2" initial="${home[1]}" cmd="${cmd}"/>
+    <xacro:rc_joint_if name="${prefix}_joint3" initial="${home[2]}" cmd="${cmd}"/>
+    <xacro:rc_joint_if name="${prefix}_joint4" initial="${home[3]}" cmd="${cmd}"/>
+    <xacro:rc_joint_if name="${prefix}_finger_left_joint" initial="0.022"/>
+    <joint name="${prefix}_finger_right_joint">
+      <param name="mimic">${prefix}_finger_left_joint</param>
+      <param name="multiplier">1</param>
+      <command_interface name="position"/>
+      <state_interface name="position"><param name="initial_value">0.022</param></state_interface>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="robocraft_ros2_control" params="hardware home i2c_device i2c_addresses">
+    <ros2_control name="RoboCraftCell" type="system">
+      <hardware>
+        <xacro:if value="${hardware == 'mock'}">
+          <plugin>mock_components/GenericSystem</plugin>
+          <param name="calculate_dynamics">false</param>
+        </xacro:if>
+        <xacro:if value="${hardware == 'gazebo'}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+        <xacro:if value="${hardware == 'real'}">
+          <plugin>robocraft_hardware/RoboCraftI2CSystem</plugin>
+          <param name="i2c_device">${i2c_device}</param>
+          <!-- one ATmega per arm, same order as the arm prefixes -->
+          <param name="arm_prefixes">arm1,arm2,arm3</param>
+          <param name="i2c_addresses">${i2c_addresses}</param>
+          <!-- J3/J4 do not exist on the 2019 prototype: they are simulated -->
+          <param name="virtual_joints">joint3,joint4</param>
+          <param name="max_consecutive_errors">5</param>
+        </xacro:if>
+      </hardware>
+      <xacro:property name="arm_cmd" value="${'velocity' if hardware == 'gazebo' else 'position'}"/>
+      <xacro:rc_arm_if prefix="arm1" home="${home}" cmd="${arm_cmd}"/>
+      <xacro:rc_arm_if prefix="arm2" home="${home}" cmd="${arm_cmd}"/>
+      <xacro:rc_arm_if prefix="arm3" home="${home}" cmd="${arm_cmd}"/>
+    </ros2_control>
+  </xacro:macro>
+
+</robot>

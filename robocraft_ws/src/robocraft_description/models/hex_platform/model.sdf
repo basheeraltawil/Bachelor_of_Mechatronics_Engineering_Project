@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!--
+  RoboCraft hexagonal platform (thesis Section 3.2).
+  60 mm corner radius, six steel shafts ("legs") on ball bearings = passive
+  revolute joints. Arms clamp the legs (links named grasp_*) with their grippers.
+  The laser head sits in the centre and marks the drawn path.
+-->
+<sdf version="1.8">
+  <model name="hex_platform">
+    <link name="plate">
+      <pose>0 0 0.005 0 0 0</pose>
+      <inertial><mass>0.23</mass><inertia><ixx>3.3e-4</ixx><iyy>3.3e-4</iyy><izz>6.5e-4</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="lower_plate">
+        <geometry><polyline><height>0.010</height>
+            <point>0.07500 0.00000</point>
+            <point>0.03750 0.06495</point>
+            <point>-0.03750 0.06495</point>
+            <point>-0.07500 0.00000</point>
+            <point>-0.03750 -0.06495</point>
+            <point>0.03750 -0.06495</point>
+        </polyline></geometry>
+        <pose>0 0 -0.005 0 0 0</pose>
+        <material><ambient>0.15 0.35 0.65 1</ambient><diffuse>0.2 0.45 0.8 1</diffuse></material>
+      </visual>
+      <visual name="brake_plate">
+        <pose>0 0 0.022 0 0 0</pose>
+        <geometry><cylinder><radius>0.066</radius><length>0.005</length></cylinder></geometry>
+        <material><ambient>0.9 0.9 0.9 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material>
+      </visual>
+      <visual name="worm_servo">
+        <pose>0 0 0.040 0 0 0</pose>
+        <geometry><box><size>0.030 0.020 0.030</size></box></geometry>
+        <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material>
+      </visual>
+      <visual name="laser_head">
+        <pose>0 0 0.070 0 0 0</pose>
+        <geometry><cylinder><radius>0.010</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.8 0.05 0.05 1</ambient><diffuse>0.9 0.1 0.1 1</diffuse><emissive>0.6 0 0 1</emissive></material>
+      </visual>
+      <collision name="plate_collision">
+        <geometry><cylinder><radius>0.072</radius><length>0.010</length></cylinder></geometry>
+        <surface><friction><ode><mu>0.3</mu><mu2>0.3</mu2></ode></friction></surface>
+      </collision>
+    </link>
+
+    <link name="grasp_leg_0">
+      <pose>0.06000 0.00000 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_0" type="revolute">
+      <parent>plate</parent><child>grasp_leg_0</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+    <link name="grasp_leg_1">
+      <pose>0.03000 0.05196 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_1" type="revolute">
+      <parent>plate</parent><child>grasp_leg_1</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+    <link name="grasp_leg_2">
+      <pose>-0.03000 0.05196 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_2" type="revolute">
+      <parent>plate</parent><child>grasp_leg_2</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+    <link name="grasp_leg_3">
+      <pose>-0.06000 0.00000 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_3" type="revolute">
+      <parent>plate</parent><child>grasp_leg_3</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+    <link name="grasp_leg_4">
+      <pose>-0.03000 -0.05196 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_4" type="revolute">
+      <parent>plate</parent><child>grasp_leg_4</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+    <link name="grasp_leg_5">
+      <pose>0.03000 -0.05196 0.050 0 0 0</pose>
+      <inertial><mass>0.02</mass><inertia><ixx>1.1e-5</ixx><iyy>1.1e-5</iyy><izz>3.6e-7</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+      <visual name="shaft"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry>
+        <material><ambient>0.35 0.35 0.37 1</ambient><diffuse>0.45 0.45 0.48 1</diffuse><specular>0.6 0.6 0.6 1</specular></material></visual>
+      <visual name="rubber"><pose>0 0 0.020 0 0 0</pose><geometry><cylinder><radius>0.0065</radius><length>0.030</length></cylinder></geometry>
+        <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material></visual>
+      <collision name="shaft_collision"><geometry><cylinder><radius>0.006</radius><length>0.080</length></cylinder></geometry></collision>
+    </link>
+    <joint name="leg_bearing_5" type="revolute">
+      <parent>plate</parent><child>grasp_leg_5</child>
+      <axis><xyz>0 0 1</xyz><limit><lower>-1e16</lower><upper>1e16</upper></limit><dynamics><damping>0.002</damping></dynamics></axis>
+    </joint>
+  </model>
+</sdf>

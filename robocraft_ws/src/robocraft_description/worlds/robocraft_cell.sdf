@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<!-- RoboCraft cell world (Gazebo Fortress). The robot itself is spawned from robot_description. -->
+<sdf version="1.8">
+  <world name="robocraft">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="ignition-gazebo-physics-system" name="ignition::gazebo::systems::Physics"/>
+    <plugin filename="ignition-gazebo-user-commands-system" name="ignition::gazebo::systems::UserCommands"/>
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="ignition::gazebo::systems::SceneBroadcaster"/>
+    <plugin filename="ignition-gazebo-sensors-system" name="ignition::gazebo::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.75 0.8 0.85 1</background>
+      <grid>false</grid>
+    </scene>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.3 -0.9</direction>
+    </light>
+    <light type="point" name="cell_lamp">
+      <pose>0.3 -0.3 1.5 0 0 0</pose>
+      <diffuse>0.5 0.5 0.5 1</diffuse>
+      <attenuation><range>6</range><constant>0.5</constant><linear>0.05</linear><quadratic>0.01</quadratic></attenuation>
+    </light>
+
+    <model name="floor">
+      <static>true</static>
+      <link name="link">
+        <collision name="col"><geometry><plane><normal>0 0 1</normal><size>6 6</size></plane></geometry></collision>
+        <visual name="v"><geometry><plane><normal>0 0 1</normal><size>6 6</size></plane></geometry>
+          <material><ambient>0.35 0.37 0.4 1</ambient><diffuse>0.4 0.42 0.45 1</diffuse></material></visual>
+      </link>
+    </model>
+
+
+    <!-- static support under the robot's base plate: objects rest at plate height
+         (z = 0.010) even before the robot model is spawned -->
+    <model name="plate_support">
+      <static>true</static>
+      <pose>0 0 0.005 0 0 0</pose>
+      <link name="link">
+        <collision name="col"><geometry><cylinder><radius>0.40</radius><length>0.010</length></cylinder></geometry>
+          <surface><friction><ode><mu>0.3</mu><mu2>0.3</mu2></ode></friction></surface></collision>
+      </link>
+    </model>
+
+    <!-- overhead camera on the camera arm (thesis 3.4), looking straight down -->
+    <model name="overhead_camera">
+      <static>true</static>
+      <pose>0 0 1.20 0 1.5707963 0</pose>
+      <link name="link">
+        <sensor name="overhead_camera" type="camera">
+          <always_on>true</always_on>
+          <update_rate>5</update_rate>
+          <topic>overhead_camera/image</topic>
+          <camera>
+            <horizontal_fov>0.9</horizontal_fov>
+            <image><width>640</width><height>640</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>5</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+
+
+    <!-- oblique "showcase" camera for documentation / video recording -->
+    <model name="showcase_camera">
+      <static>true</static>
+      <pose>0.62 -0.62 0.62 0 0.56 2.356</pose>
+      <link name="link">
+        <sensor name="showcase_camera" type="camera">
+          <always_on>true</always_on>
+          <update_rate>2</update_rate>
+          <topic>showcase_camera/image</topic>
+          <camera>
+            <horizontal_fov>1.0</horizontal_fov>
+            <image><width>960</width><height>600</height><format>R8G8B8</format></image>
+            <clip><near>0.05</near><far>6</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+
+    <include>
+      <uri>model://hex_platform</uri>
+      <name>hex_platform</name>
+      <pose>0 0 0.010 0 0 0.5235988</pose>
+    </include>
+
+    <model name="part_red">
+      <pose>-0.1032 -0.1726 0.030 0 0 0</pose>
+      <link name="grasp_body">
+        <inertial><mass>0.05</mass><inertia><ixx>1.3e-5</ixx><iyy>1.3e-5</iyy><izz>1.3e-5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <visual name="v"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <material><ambient>0.85 0.1 0.1 1</ambient><diffuse>0.85 0.1 0.1 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+      </link>
+    </model>
+
+    <model name="part_blue">
+      <pose>0.2011 -0.0031 0.030 0 0 0</pose>
+      <link name="grasp_body">
+        <inertial><mass>0.05</mass><inertia><ixx>1.3e-5</ixx><iyy>1.3e-5</iyy><izz>1.3e-5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <visual name="v"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <material><ambient>0.1 0.2 0.85 1</ambient><diffuse>0.1 0.2 0.85 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+      </link>
+    </model>
+
+    <model name="part_yellow">
+      <pose>-0.0978 0.1757 0.030 0 0 0</pose>
+      <link name="grasp_body">
+        <inertial><mass>0.05</mass><inertia><ixx>1.3e-5</ixx><iyy>1.3e-5</iyy><izz>1.3e-5</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <visual name="v"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <material><ambient>0.9 0.8 0.1 1</ambient><diffuse>0.9 0.8 0.1 1</diffuse></material></visual>
+        <collision name="col"><geometry><box><size>0.04 0.04 0.04</size></box></geometry>
+          <surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+      </link>
+    </model>
+
+  </world>
+</sdf>

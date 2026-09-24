@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<!--
+  RoboCraft reconfigurable cell: base plate + 3 SCARA arms (+ camera mast).
+  Geometry comes from config/cell.yaml.
+
+  args:
+    hardware          mock | gazebo | real
+    controllers_file  controller_manager parameters (required for gazebo)
+-->
+<robot name="robocraft_cell" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="hardware" default="mock"/>
+  <xacro:arg name="controllers_file" default=""/>
+  <xacro:arg name="i2c_device" default="/dev/i2c-1"/>
+  <xacro:arg name="i2c_addresses" default="8,9,10"/>
+
+  <xacro:property name="cfg" value="${xacro.load_yaml('$(find robocraft_description)/config/cell.yaml')}"/>
+  <xacro:property name="hardware" value="$(arg hardware)"/>
+  <xacro:property name="R_plate" value="${cfg['cell']['base_plate_radius']}"/>
+  <xacro:property name="T_plate" value="${cfg['cell']['base_plate_thickness']}"/>
+  <xacro:property name="R_base" value="${cfg['cell']['base_circle_radius']}"/>
+  <!-- parked pose: elbows folded outwards, quill up -->
+  <xacro:property name="home" value="${[-1.6, 2.5, 0.0, 0.0]}"/>
+
+  <xacro:include filename="$(find robocraft_description)/urdf/common.xacro"/>
+  <xacro:include filename="$(find robocraft_description)/urdf/scara_arm.xacro"/>
+  <xacro:include filename="$(find robocraft_description)/urdf/robocraft.ros2_control.xacro"/>
+
+  <link name="world"/>
+
+  <!-- ============================ base plate =============================== -->
+  <joint name="base_plate_joint" type="fixed">
+    <parent link="world"/>
+    <child link="base_plate"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+  <link name="base_plate">
+    <visual>
+      <origin xyz="0 0 ${T_plate/2}"/>
+      <geometry><cylinder radius="${R_plate}" length="${T_plate}"/></geometry>
+      <xacro:rc_mat name="rc_white"/>
+    </visual>
+    <!-- centre mark and the three 120 deg reference lines drawn on the prototype plate -->
+    <xacro:cyl_visual r="0.004" h="0.0006" xyz="0 0 ${T_plate+0.0003}" material="rc_dark"/>
+    <xacro:box_visual size="${R_base} 0.002 0.0006" xyz="0 ${-R_base/2} ${T_plate+0.0003}" rpy="0 0 ${pi/2}" material="rc_dark"/>
+    <xacro:box_visual size="${R_base} 0.002 0.0006" xyz="${R_base/2*cos(pi/6)} ${R_base/2*sin(pi/6)} ${T_plate+0.0003}" rpy="0 0 ${pi/6}" material="rc_dark"/>
+    <xacro:box_visual size="${R_base} 0.002 0.0006" xyz="${-R_base/2*cos(pi/6)} ${R_base/2*sin(pi/6)} ${T_plate+0.0003}" rpy="0 0 ${5*pi/6}" material="rc_dark"/>
+    <collision>
+      <origin xyz="0 0 ${T_plate/2}"/>
+      <geometry><cylinder radius="${R_plate}" length="${T_plate}"/></geometry>
+    </collision>
+    <xacro:cyl_inertial m="5.0" r="${R_plate}" h="${T_plate}">
+      <origin xyz="0 0 ${T_plate/2}"/>
+    </xacro:cyl_inertial>
+  </link>
+
+  <!-- ============================ camera mast (thesis 3.4) ================ -->
+  <joint name="camera_mast_joint" type="fixed">
+    <parent link="base_plate"/>
+    <child link="camera_mast"/>
+    <origin xyz="${(R_plate+0.03)*cos(-5*pi/6)} ${(R_plate+0.03)*sin(-5*pi/6)} 0" rpy="0 0 ${pi/6}"/>
+  </joint>
+  <link name="camera_mast">
+    <xacro:box_visual size="0.03 0.03 1.25" xyz="0 0 0.625" material="rc_dark"/>
+    <xacro:box_visual size="${R_plate+0.03} 0.03 0.03" xyz="${(R_plate+0.03)/2} 0 1.235" material="rc_dark"/>
+    <xacro:box_inertial m="1.0" x="0.03" y="0.03" z="1.25"><origin xyz="0 0 0.625"/></xacro:box_inertial>
+  </link>
+  <joint name="overhead_camera_joint" type="fixed">
+    <parent link="world"/>
+    <child link="overhead_camera"/>
+    <origin xyz="0 0 1.20" rpy="0 ${pi/2} 0"/>
+  </joint>
+  <link name="overhead_camera">
+    <xacro:box_visual size="0.03 0.06 0.03" xyz="-0.02 0 0" material="rc_dark"/>
+    <!-- a (tiny) inertial keeps this a real link in the URDF->SDF conversion -->
+    <xacro:box_inertial m="0.05" x="0.03" y="0.06" z="0.03"><origin xyz="0 0 0"/></xacro:box_inertial>
+  </link>
+  <!-- REP-103 optical frame: z forward (down), x right, y down in the image -->
+  <joint name="overhead_camera_optical_joint" type="fixed">
+    <parent link="overhead_camera"/>
+    <child link="overhead_camera_optical"/>
+    <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+  </joint>
+  <link name="overhead_camera_optical"/>
+
+  <!-- ============================ the three arms =========================== -->
+  <xacro:macro name="place_arm" params="idx">
+    <xacro:property name="name" value="${cfg['arms']['names'][idx]}"/>
+    <xacro:property name="ang" value="${radians(cfg['arms']['base_angles_deg'][idx])}"/>
+    <xacro:robocraft_scara_arm prefix="${name}" parent="base_plate"
+        base_x="${R_base*cos(ang)}" base_y="${R_base*sin(ang)}" base_yaw="${ang+pi}" cfg="${cfg}"/>
+  </xacro:macro>
+  <xacro:place_arm idx="0"/>
+  <xacro:place_arm idx="1"/>
+  <xacro:place_arm idx="2"/>
+
+  <xacro:robocraft_ros2_control hardware="${hardware}" home="${home}"
+      i2c_device="$(arg i2c_device)" i2c_addresses="$(arg i2c_addresses)"/>
+
+  <!-- ============================ Gazebo =================================== -->
+  <xacro:if value="${hardware == 'gazebo'}">
+    <gazebo>
+      <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(arg controllers_file)</parameters>
+      </plugin>
+    </gazebo>
+    <!-- grasp = fixed joint between wrist and the graspable link between the fingers -->
+    <xacro:macro name="grasp_plugin" params="prefix">
+      <gazebo>
+        <plugin filename="RoboCraftGraspPlugin" name="robocraft_gz::GraspPlugin">
+          <arm>${prefix}</arm>
+          <parent_link>${prefix}_wrist</parent_link>
+          <tcp_offset>0 0 ${-cfg['arm']['gripper_body_height']+0.006-cfg['arm']['finger_length']+cfg['arm']['tcp_above_finger_tip']}</tcp_offset>
+          <command_topic>/robocraft/${prefix}/grasp_cmd</command_topic>
+          <state_topic>/robocraft/${prefix}/grasp_state</state_topic>
+          <graspable_prefix>grasp_</graspable_prefix>
+          <max_distance>0.020</max_distance>
+        </plugin>
+      </gazebo>
+    </xacro:macro>
+    <xacro:grasp_plugin prefix="arm1"/>
+    <xacro:grasp_plugin prefix="arm2"/>
+    <xacro:grasp_plugin prefix="arm3"/>
+
+    <gazebo reference="base_plate"><mu1>0.3</mu1><mu2>0.3</mu2></gazebo>
+  </xacro:if>
+
+</robot>

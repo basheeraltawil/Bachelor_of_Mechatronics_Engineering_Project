@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robocraft_kinematics</name>
+  <version>2.0.0</version>
+  <description>Kinematics, trajectory generation, interference checking and workspace analysis for the RoboCraft reconfigurable 3-arm SCARA cell (pure Python).</description>
+  <maintainer email="basheeraltaweel@gmail.com">Basheer Al-Tawil</maintainer>
+  <license>MIT</license>
+
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-matplotlib</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>robocraft_description</exec_depend>
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
