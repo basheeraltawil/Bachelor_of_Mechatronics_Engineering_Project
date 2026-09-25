@@ -129,7 +129,6 @@ Eight short scripts recompute the thesis design with the formulas explained:
 
 
 
-**2019 team:** Basheer Al‑Tawil, Saran Sapmaz, Esra Uçar, Adem Candemir. Supervisor: Assist. Prof. Dr. Osman Akın,
-İzmir Kâtip Çelebi University, Mechatronics Engineering. **ROS 2 rebuild (2026):** Basheer Al‑Tawil.
+
 
 Licensed under [MIT](LICENSE). Citation information: [CITATION.cff](CITATION.cff).
