@@ -131,4 +131,4 @@ Eight short scripts recompute the thesis design with the formulas explained:
 
 
 
-Licensed under [MIT](LICENSE). Citation information: [CITATION.cff](CITATION.cff).
+Licensed under [MIT](LICENSE). 
