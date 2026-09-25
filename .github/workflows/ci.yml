@@ -1,0 +1,54 @@
+# Continuous integration: build + test the ROS 2 workspace, run the engineering
+# analysis, and compile the ATmega firmware on every push and pull request.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  ros2:
+    name: ROS 2 Humble build + tests
+    runs-on: ubuntu-22.04
+    container: ros:humble-ros-base-jammy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (rosdep)
+        run: |
+          apt-get update
+          rosdep update --rosdistro humble
+          rosdep install --from-paths robocraft_ws/src --ignore-src -y --rosdistro humble
+          apt-get install -y python3-pytest python3-matplotlib python3-yaml
+
+      - name: Build
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd robocraft_ws
+          colcon build --event-handlers console_cohesion+
+
+      - name: Unit tests
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          cd robocraft_ws
+          source install/setup.bash
+          colcon test --event-handlers console_cohesion+
+          colcon test-result --verbose
+
+      - name: Engineering analysis (all scripts)
+        run: python3 analysis/run_all.py
+
+  firmware:
+    name: ATmega firmware compiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/compile-sketches@v1
+        with:
+          fqbn: arduino:avr:uno
+          sketch-paths: robocraft_ws/src/robocraft_hardware/firmware/robocraft_joint_firmware
+          libraries: |
+            - name: Servo
