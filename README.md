@@ -14,10 +14,18 @@ It started as my mechatronics bachelor project in 2019 (design, manufacturing, e
 control of a real prototype). I have since rebuilt it as an industrial‑style **ROS 2 / Gazebo**
 system with eight application scenarios, a verified engineering analysis and a real‑hardware driver.
 
-<p align="center">
-  <img src="docs/images/reconfiguration_demo.gif" width="720" alt="Reconfiguration demo"><br>
-  <sub>Serial pick-and-place → the arms couple to the platform → laser square → handover rotation → back to serial work (Gazebo physics)</sub>
-</p>
+<table>
+  <tr>
+    <th align="center" width="50%">Real Robot</th>
+    <th align="center" width="33%">The Robot in Simulation</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/robot.jpeg" alt="Real Assembled Robot"/></td>
+    <td align="center"><img src="docs/images/reconfiguration_demo.gif" alt="Reconfiguration Demo"/></td>
+  </tr>
+</table>
+
+
 
 ## Highlights
 
