@@ -10,7 +10,6 @@ This folder keeps the 2019 material unchanged. The modern ROS 2 version is in
 
 | Folder | Content |
 |---|---|
-| [`thesis/`](thesis) | full thesis: [PDF](thesis/graduation_project_thesis.pdf) and a [Markdown text version](thesis/graduation_project_thesis.md) |
 | [`code_appendix/`](code_appendix) | code appendix of the thesis ([PDF](code_appendix/code_appendix.pdf), [Markdown](code_appendix/code_appendix.md)) |
 | [`legacy_code/`](legacy_code) | the appendix code as source files ([origin and limitations](legacy_code/CODE_ORIGIN.md)) |
 | [`figures/`](figures) | photo of the prototype, CAD, workspace study, H‑bridge schematic |
