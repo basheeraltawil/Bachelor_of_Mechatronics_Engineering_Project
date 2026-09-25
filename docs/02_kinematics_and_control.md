@@ -38,13 +38,24 @@ Code: [`scara.py`](../robocraft_ws/src/robocraft_kinematics/robocraft_kinematics
 
 ## 2.2 Platform (parallel kinematics)
 
-With the platform at pose (x, y, φ), leg k is at
+With the platform at pose $(x,y,\varphi)$, leg $k$ ($k=0,\dots,5$) is at
 
-$$\mathbf p_k = \begin{bmatrix}x\\y\end{bmatrix} + R(\varphi)\,\rho\begin{bmatrix}\cos 60k°\\ \sin 60k°\end{bmatrix},\qquad \rho = 60\ \text{mm}$$
+$$\mathbf p_k = \begin{bmatrix}x\\y\end{bmatrix} + R(\varphi)\,\rho\begin{bmatrix}\cos 60k°\\ \sin 60k°\end{bmatrix},\qquad \rho = 60\ \text{mm}, \qquad R(\varphi) = \begin{bmatrix}\cos\varphi & -\sin\varphi\\ \sin\varphi & \cos\varphi\end{bmatrix}$$
 
 * **Inverse kinematics (easy):** compute every leg position, then each arm solves its own IK to its leg.
-* **Forward kinematics:** a least‑squares rigid fit of the platform through the measured gripper positions.
-  The fit error (**closure error**) is published: it grows if the arms start pulling against each other.
+
+* **Forward kinematics:** a least-squares rigid fit of the platform through the measured gripper positions. With local leg layout $L$ and measured world positions $W$ (centroids $\bar L,\bar W$):
+
+$$H = (L-\bar L)^T(W-\bar W), \qquad \varphi = \operatorname{atan2}(H_{12}-H_{21},\ H_{11}+H_{22}), \qquad \mathbf t = \bar W - R(\varphi)\,\bar L$$
+
+giving pose $(x,y)=\mathbf t$, yaw $\varphi$.
+
+  The fit error (**closure error**) is published:
+
+$$e = \max_k \lVert \mathbf p_{tcp,k} - \mathbf p_k(\hat\varphi) \rVert$$
+
+  it grows if the arms start pulling against each other.
+
 * 2 arms already control all 3 DOF; the third arm adds stiffness, load sharing and the ability to regrasp.
 
 Code: [`parallel.py`](../robocraft_ws/src/robocraft_kinematics/robocraft_kinematics/parallel.py)
