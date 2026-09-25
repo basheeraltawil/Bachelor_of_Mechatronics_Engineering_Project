@@ -1,4 +1,4 @@
-# RoboCraft: reconfigurable three‑arm SCARA cell
+# RoboCraft: Reconfigurable Three‑Arm SCARA Cell
 
 [![CI](https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2/actions/workflows/ci.yml/badge.svg)](https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2/actions/workflows/ci.yml)
 ![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros)
