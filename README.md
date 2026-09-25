@@ -1,6 +1,6 @@
 # RoboCraft: reconfigurable three‑arm SCARA cell
 
-[![CI](https://github.com/basheeraltawil/Bachelor_of_Mechatronics_Engineering_Project/actions/workflows/ci.yml/badge.svg)](https://github.com/basheeraltawil/Bachelor_of_Mechatronics_Engineering_Project/actions/workflows/ci.yml)
+[![CI](https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2/actions/workflows/ci.yml/badge.svg)](https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2/actions/workflows/ci.yml)
 ![ROS 2 Humble](https://img.shields.io/badge/ROS%202-Humble-22314E?logo=ros)
 ![Gazebo Fortress](https://img.shields.io/badge/Gazebo-Fortress-F58113)
 ![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)
@@ -61,8 +61,8 @@ sudo apt install ros-humble-desktop ros-humble-ros-gz ros-humble-gz-ros2-control
   ros-humble-joint-state-publisher-gui ros-humble-cv-bridge \
   ignition-fortress libignition-gazebo6-dev python3-opencv python3-pytest
 
-git clone https://github.com/basheeraltawil/Bachelor_of_Mechatronics_Engineering_Project.git
-cd Bachelor_of_Mechatronics_Engineering_Project/robocraft_ws
+git clone https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2.git
+cd reconfigurable-scara-robot-cell-ros2/robocraft_ws
 source /opt/ros/humble/setup.bash
 colcon build --symlink-install && source install/setup.bash
 

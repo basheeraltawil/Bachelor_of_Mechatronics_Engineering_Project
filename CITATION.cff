@@ -6,7 +6,7 @@ authors:
     given-names: "Basheer"
 type: software
 license: MIT
-repository-code: "https://github.com/basheeraltawil/Bachelor_of_Mechatronics_Engineering_Project"
+repository-code: "https://github.com/basheeraltawil/reconfigurable-scara-robot-cell-ros2"
 keywords: [robotics, SCARA, parallel manipulator, reconfigurable robot, ROS 2, Gazebo, ros2_control]
 references:
   - type: thesis
