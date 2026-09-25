@@ -127,13 +127,7 @@ Eight short scripts recompute the thesis design with the formulas explained:
 | [4. Hardware](docs/04_hardware.md) | electronics, protocol, firmware, commissioning |
 | [5. Developer guide](docs/05_developer_guide.md) | code map, adding a scenario, tests, CI |
 
-## From the 2019 prototype to today
 
-<p align="center">
-  <img src="thesis_2019/figures/robot.jpeg" width="40%" alt="2019 prototype">
-  <img src="docs/images/sim_hero.png" width="52%" alt="Simulation"><br>
-  <sub>Left: the prototype we designed and built in 2019. Right: the ROS 2 digital twin with 4‑axis arms.</sub>
-</p>
 
 **2019 team:** Basheer Al‑Tawil, Saran Sapmaz, Esra Uçar, Adem Candemir. Supervisor: Assist. Prof. Dr. Osman Akın,
 İzmir Kâtip Çelebi University, Mechatronics Engineering. **ROS 2 rebuild (2026):** Basheer Al‑Tawil.
