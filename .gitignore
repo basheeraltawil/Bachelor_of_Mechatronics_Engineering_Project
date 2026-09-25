@@ -2,6 +2,9 @@
 robocraft_ws/build/
 robocraft_ws/install/
 robocraft_ws/log/
+/build/
+/install/
+/log/
 
 # Python
 __pycache__/
