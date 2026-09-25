@@ -25,8 +25,8 @@ $$x = x_i + a\cos\theta_1 + b\cos(\theta_1 + q_2),\qquad y = y_i + a\sin\theta_1
 $$z = z_0 - q_3,\qquad \text{tool yaw} = \theta_1 + q_2 + q_4$$
 
 **Inverse kinematics** gives the joint angles from the tool position (thesis 2.2.4):
+$$\cos q_2 = \frac{r^2 - a^2 - b^2}{2ab},\qquad q_1 = \text{atan2}(\Delta y, \Delta x) - \text{atan2}(b\sin q_2,\ a + b\cos q_2) - \psi_i$$
 
-$$\cos q_2 = \frac{r^2 - a^2 - b^2}{2ab},\qquad q_1 = \operatorname{atan2}(\Delta y, \Delta x) - \operatorname{atan2}(b\sin q_2,\ a + b\cos q_2) - \psi_i$$
 
 There are two solutions (elbow left / right). During a straight‑line move the elbow side is kept,
 as on an industrial controller, so the arm never flips unexpectedly.
