@@ -1,0 +1,100 @@
+
+========================================================================
+01 Workspace analysis
+========================================================================
+arm      reachable [mm^2]   dexterous [mm^2]
+arm1               244752             152736
+arm2               244592             152592
+arm3               244640             152624
+
+serial mode   (union of the arms)      :    264656 mm^2   PC1 = 0.66
+parallel mode (all 3 arms, 360 deg turn):     16384 mm^2   PC1 = 0.04
+thesis value (SolidWorks, no joint limits): 383438 mm^2   PC1 = 0.95
+  figure -> docs/images/analysis/01_workspace.png
+
+========================================================================
+02 Kinematics, Jacobian, singularities
+========================================================================
+FK->IK round trip on 2000 random poses: max joint error = 6.91e-15 rad
+manipulability max = 0.0484 m^2 at |q2| = 90 deg (elbow at 90 deg is the most dexterous pose)
+well-conditioned band (condition number < 3): r = 75 ... 332 mm from the column
+  figure -> docs/images/analysis/02_kinematics.png
+
+========================================================================
+03 Dynamics and motor sizing
+========================================================================
+link 1: m = 0.82 kg, CoM 43 mm, I = 7.94 g·m^2
+link 2 + tool + payload: m = 1.23 kg, CoM 189 mm, I = 4.53 g·m^2
+
+fastest PTP (1.52 s, 30 rpm rated speed): peak torque J1 = 2.18 N·m, J2 = 1.32 N·m
+thesis requirement: 1.57 N·m (16 kg·cm);  motor stall: 4.12 N·m (42 kg·cm)
+smallest margin to the motor torque-speed line: x1.6
+
+Z axis: 8.1 N (weight + 2 m/s^2) -> screw torque 7.2 mN·m
+bending moment on the J1 bearings (arm stretched): 5.28 N·m -> the thesis uses two 17 mm deep-groove bearings to carry it
+  figure -> docs/images/analysis/03_dynamics_motor_sizing.png
+
+========================================================================
+04 Link deflection and stress
+========================================================================
+normal load (tool + 0.2 kg)   : F =   6.8 N  deflection =  0.29 mm  stress =   3.5 MPa  safety factor = 77.8
+thesis overload test (70 N)   : F =  70.0 N  deflection =  1.85 mm  stress =  20.2 MPa  safety factor = 13.6
+
+thinnest link that keeps the 2.5 mm limit under normal load: 9.8 mm (selected: 20 mm)
+  figure -> docs/images/analysis/04_link_deflection.png
+
+========================================================================
+05 Trajectory planning
+========================================================================
+P0 [-0.12 -0.1 ], via [-0.014 -0.006], Pf [ 0.12 -0.05] (bending angle 30 deg)
+J1: cubic coefficients seg1 = [-0.4655  0.     -0.0494 -0.0081], seg2 = [-0.7282 -0.2952 -0.0982  0.0573]
+J2: cubic coefficients seg1 = [ 1.9297  0.     -0.2372  0.0709], seg2 = [ 1.5483 -0.0977  0.1884 -0.0546]
+  figure -> docs/images/analysis/05_trajectory_planning.png
+
+========================================================================
+06 Potentiometer calibration and resolution
+========================================================================
+least-squares fit: B = 1.0221 A -9.1998   (thesis: 1.0074 A - 2.6413)
+residual RMS = 1.03 deg, max = 3.21 deg
+
+angular resolution and resulting TCP quantisation at 440 mm reach:
+  10-bit ADC, 10-turn pot (2019)    :  3.519 deg ->  27.02 mm
+  16-bit ADC (ADS1115), same pot    :  0.055 deg ->   0.42 mm
+  12-bit magnetic encoder (AS5600)  :  0.088 deg ->   0.67 mm
+  10-bit ADC, pot geared 1:10       :  0.352 deg ->   2.70 mm
+  figure -> docs/images/analysis/06_sensor_calibration.png
+
+========================================================================
+07 Motor model and Ziegler-Nichols tuning
+========================================================================
+motor: Kt = 1.146 N·m/A, R = 3.34 ohm
+J1: J = 0.130 kg·m^2, K = 0.433, tau = 164 ms -> Ku = 117.9 V/rad = 43.7 PWM/deg, Pu = 0.37 s   (firmware KU/PU)
+J2: J = 0.061 kg·m^2, K = 0.495, tau = 88 ms -> Ku = 104.6 V/rad = 38.8 PWM/deg, Pu = 0.27 s   (firmware KU/PU)
+
+J1 gains in firmware units (PWM counts per degree of error):
+  P  (0.5 Ku)               : Kp =   58.9 V/rad = 21.86 PWM/deg, Ti = inf s, Td = 0.000 s
+  PI (0.45 Ku, Pu/1.2)      : Kp =   53.0 V/rad = 19.67 PWM/deg, Ti = 0.306 s, Td = 0.000 s
+  PID (0.6 Ku, Pu/2, Pu/8)  : Kp =   70.7 V/rad = 26.23 PWM/deg, Ti = 0.184 s, Td = 0.046 s
+  TL-PI (Ku/3.2, 2.2 Pu)    : Kp =   36.8 V/rad = 13.66 PWM/deg, Ti = 0.807 s, Td = 0.000 s
+  P (0.5 Ku) + feed-forward : Kp =   58.9 V/rad = 21.86 PWM/deg, Ti = inf s, Td = 0.000 s
+
+30 deg STEP (classic ZN test):
+  P  (0.5 Ku)               : overshoot 46.7 %, settling (+/-0.5 deg) 2.72 s
+  PI (0.45 Ku, Pu/1.2)      : overshoot 50.2 %, settling (+/-0.5 deg) 3.00 s
+  PID (0.6 Ku, Pu/2, Pu/8)  : overshoot 30.2 %, settling (+/-0.5 deg) 1.45 s
+  TL-PI (Ku/3.2, 2.2 Pu)    : overshoot 48.4 %, settling (+/-0.5 deg) 2.83 s
+30 deg SMOOTH trajectory in 0.8 s (how the robot is really commanded):
+  P  (0.5 Ku)               : max tracking error 5.17 deg, with 2019 pot resolution 4.72 deg
+  PI (0.45 Ku, Pu/1.2)      : max tracking error 6.65 deg, with 2019 pot resolution 6.20 deg
+  PID (0.6 Ku, Pu/2, Pu/8)  : max tracking error 2.83 deg, with 2019 pot resolution 8.21 deg
+  TL-PI (Ku/3.2, 2.2 Pu)    : max tracking error 7.71 deg, with 2019 pot resolution 7.55 deg
+  P (0.5 Ku) + feed-forward : max tracking error 0.75 deg, with 2019 pot resolution 1.23 deg
+  figure -> docs/images/analysis/07_motor_control_tuning.png
+
+========================================================================
+08 Parallel-mode workspace
+========================================================================
+constant orientation (30 deg), 3 arms:    86752 mm^2
+constant orientation (30 deg), 2 arms:   128048 mm^2
+rotation capability at the centre: +/-90 deg (the handover scenario uses 60 deg steps with regrasping)
+  figure -> docs/images/analysis/08_parallel_workspace.png
