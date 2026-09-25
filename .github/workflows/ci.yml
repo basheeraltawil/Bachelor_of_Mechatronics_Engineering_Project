@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     container: ros:humble-ros-base-jammy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies (rosdep)
         run: |
@@ -43,9 +43,9 @@ jobs:
 
   firmware:
     name: ATmega firmware compiles
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: arduino/compile-sketches@v1
         with:
           fqbn: arduino:avr:uno
