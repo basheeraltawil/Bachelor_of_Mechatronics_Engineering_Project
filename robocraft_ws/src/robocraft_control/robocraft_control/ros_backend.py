@@ -1,4 +1,18 @@
-"""ROS 2 backend: ros2_control trajectory/gripper actions + Gazebo grasp plugin."""
+"""ROS 2 backend: connects the CellCommander to ros2_control and Gazebo.
+
+What it does                          ROS interface used
+------------------------------------  ---------------------------------------------------
+read joint angles                     /joint_states (joint_state_broadcaster)
+run arm trajectories                  /armN_controller/follow_joint_trajectory (action)
+open / close grippers                 /armN_gripper_controller/gripper_cmd (action)
+attach / release objects (Gazebo)     /robocraft/armN/grasp_cmd -> grasp plugin -> grasp_state
+platform ground truth (Gazebo)        /robocraft/world_poses (bridged from Gazebo)
+camera results                        /robocraft/obstacles, /robocraft/detections
+report                                /robocraft/status, /robocraft/laser, /robocraft/platform/pose_est
+
+The same class works for mock hardware, Gazebo and the real robot; only
+``grasp_mode`` differs ("gazebo" uses the grasp plugin, "simulated" trusts the gripper).
+"""
 from __future__ import annotations
 
 import math
@@ -22,11 +36,11 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 from robocraft_interfaces.msg import CellStatus, ObstacleArray
 from robocraft_kinematics.geometry import CellGeometry
-from robocraft_kinematics.parallel import PlatformPose
+from robocraft_kinematics.parallel import PlatformPose, closure_error
 from robocraft_kinematics.trajectory import JointTrajectory
 from robocraft_kinematics.via_point import CircleObstacle
 
-from .backend import Backend, ExecutionError
+from .backend import Backend, Detection, ExecutionError
 
 
 def _duration(t: float) -> Duration:
@@ -83,6 +97,8 @@ class RosBackend(Node, Backend):
         self.create_subscription(TFMessage, "/robocraft/world_poses", self._on_world_poses, 10, callback_group=cb)
         self._obstacles: Tuple[float, List[CircleObstacle]] = (0.0, [])
         self.create_subscription(ObstacleArray, "/robocraft/obstacles", self._on_obstacles, 10, callback_group=cb)
+        self._detections: Tuple[float, List[Detection]] = (0.0, [])
+        self.create_subscription(ObstacleArray, "/robocraft/detections", self._on_detections, 10, callback_group=cb)
         self.commander = None  # set by the scenario runner (for status reporting)
         self._held: Dict[str, str] = {a: "idle" for a in cell.arm_names}
 
@@ -101,6 +117,9 @@ class RosBackend(Node, Backend):
 
     def _on_obstacles(self, msg: ObstacleArray) -> None:
         self._obstacles = (time.monotonic(), [CircleObstacle(o.x, o.y, o.radius) for o in msg.obstacles])
+
+    def _on_detections(self, msg: ObstacleArray) -> None:
+        self._detections = (time.monotonic(), [Detection(o.label, o.x, o.y, o.radius) for o in msg.obstacles])
 
     # ------------------------------------------------------------------ startup
     def wait_ready(self, timeout: float = 60.0) -> None:
@@ -217,6 +236,7 @@ class RosBackend(Node, Backend):
         self._pose_pub.publish(m)
 
     def status(self, text: str) -> None:
+        """Log a progress message and publish the cell status (mode, grasps, health)."""
         self.get_logger().info(text)
         m = CellStatus()
         m.header.stamp = self.get_clock().now().to_msg()
@@ -225,14 +245,12 @@ class RosBackend(Node, Backend):
         m.active_task = text
         if self.commander is not None:
             c = self.commander
-            m.mode = c.mode if c.grips else "serial"
+            m.mode = c.mode
             m.min_interference_margin = float(c.last_margin) if math.isfinite(c.last_margin) else -1.0
             if len(c.grips) >= 2:
-                from robocraft_kinematics.parallel import closure_error
-                try:
-                    m.closure_error = closure_error(self.cell, {a: self.get_q(a) for a in c.grips}, c.grips)
-                except Exception:  # noqa: BLE001
-                    m.closure_error = -1.0
+                # how far the measured grippers are from a rigid platform: the arms
+                # fight each other when this grows (redundant actuation health check)
+                m.closure_error = closure_error(self.cell, {a: self.get_q(a) for a in c.grips}, c.grips)
         self._status_pub.publish(m)
 
     def platform_ground_truth(self) -> Optional[PlatformPose]:
@@ -246,6 +264,12 @@ class RosBackend(Node, Backend):
         while time.monotonic() < deadline and self._obstacles[0] == 0.0:
             time.sleep(0.1)
         return list(self._obstacles[1])
+
+    def detections(self, timeout: float = 0.0) -> List[Detection]:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline and self._detections[0] == 0.0:
+            time.sleep(0.1)
+        return list(self._detections[1])
 
     def sleep(self, seconds: float) -> None:
         time.sleep(seconds)

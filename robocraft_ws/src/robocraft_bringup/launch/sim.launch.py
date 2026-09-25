@@ -39,7 +39,7 @@ def generate_launch_description():
         DeclareLaunchArgument("world", default_value="cell", description="cell | obstacle"),
         DeclareLaunchArgument("headless", default_value="false", description="run Gazebo without GUI"),
         DeclareLaunchArgument("rviz", default_value="true"),
-        DeclareLaunchArgument("vision", default_value="true", description="start the green-obstacle detector"),
+        DeclareLaunchArgument("vision", default_value="true", description="start the camera object detector (obstacles + parts)"),
         DeclareLaunchArgument("scenario", default_value="", description="scenario to start automatically"),
         DeclareLaunchArgument("scenario_args", default_value="", description="e.g. '--side 0.1 --speed 0.02'"),
         DeclareLaunchArgument("speed_override", default_value="0.6", description="industrial override 0..1"),
@@ -95,7 +95,7 @@ def generate_launch_description():
 
     visualizer = Node(package="robocraft_control", executable="cell_visualizer", output="screen",
                       parameters=[{"use_sim_time": True, "pose_topic": "/robocraft/world_poses"}])
-    detector = Node(package="robocraft_control", executable="obstacle_detector", output="screen",
+    detector = Node(package="robocraft_control", executable="vision_detector", output="screen",
                     parameters=[{"use_sim_time": True}], condition=IfCondition(vision))
     rviz_node = Node(package="rviz2", executable="rviz2", output="log",
                      arguments=["-d", os.path.join(desc, "rviz", "robocraft.rviz")],

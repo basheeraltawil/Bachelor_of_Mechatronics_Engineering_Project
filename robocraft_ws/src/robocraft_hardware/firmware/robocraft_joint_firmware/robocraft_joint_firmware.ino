@@ -2,8 +2,16 @@
 //
 // Drives J1 and J2 (12 V 50:1 DC gear motors through the MOSFET H-bridges of
 // the thesis), reads the Bourns 3590 10-turn precision potentiometers, runs a
-// PI position loop (Ziegler–Nichols tuned, thesis Section 4.3) and drives the
-// rack-and-pinion gripper servo.
+// position loop (PI + velocity feed-forward, gains from Ziegler–Nichols,
+// thesis Section 4.3) and drives the rack-and-pinion gripper servo.
+//
+// Controller per joint (units: degrees, PWM counts 0..255):
+//     u = Kp * e + Ki * integral(e) + Kff * w_target
+//   e        = target - measured angle
+//   w_target = speed of the target, estimated from consecutive I2C targets
+//   Kff      = PWM needed per deg/s of speed (from the motor model)
+// See analysis/07_motor_control_tuning.py: feed-forward reduces the tracking
+// error on a smooth 30 deg move from ~5 deg to <1 deg.
 //
 // Changes w.r.t. the 2019 appendix code (documented in the README):
 //   * Potentiometers on A0/A1. A4/A5 are SDA/SCL on the ATmega328 and were
@@ -12,7 +20,7 @@
 //   * Framed protocol with CRC-8 + sequence number (thesis observed corrupted
 //     I2C data); invalid frames are dropped, not executed.
 //   * Watchdog: no valid command for 250 ms -> motors off (fail-safe).
-//   * Soft joint limits, integrator anti-windup, dead-band.
+//   * Soft joint limits, integrator anti-windup, dead-band, velocity feed-forward.
 //
 // Frame formats: see robocraft_kinematics/protocol.py.
 //
@@ -42,12 +50,17 @@ const float DIR1 = 1.0, DIR2 = 1.0;             // flip if a joint counts backwa
 
 const float LIMIT1_DEG = 150.0, LIMIT2_DEG = 145.0;
 
-// PI gains from Ziegler–Nichols (P: Kp = 0.5 Ku; PI: Kp = 0.45 Ku, Ti = Pu / 1.2).
-// Re-identify Ku, Pu on your hardware (see README "Commissioning").
-const float KU1 = 22.0, PU1 = 0.40;   // [PWM/deg], [s]
-const float KU2 = 1.8, PU2 = 0.35;
-const float KP1 = 0.45 * KU1, KI1 = KP1 / (PU1 / 1.2);
-const float KP2 = 0.45 * KU2, KI2 = KP2 / (PU2 / 1.2);
+// Ultimate gain Ku [PWM/deg] and period Pu [s] per joint. Starting values come
+// from the motor model in analysis/07_motor_control_tuning.py; confirm them on
+// the robot with the Ziegler–Nichols test (raise Kp until the joint oscillates
+// steadily: that Kp is Ku, the oscillation period is Pu).
+const float KU1 = 43.7, PU1 = 0.37;
+const float KU2 = 38.8, PU2 = 0.27;
+// Tyreus-Luyben PI (gentler than classic ZN, see the analysis) ...
+const float KP1 = KU1 / 3.2, KI1 = KP1 / (2.2 * PU1);
+const float KP2 = KU2 / 3.2, KI2 = KP2 / (2.2 * PU2);
+// ... plus feed-forward: PWM per deg/s = (1 / K_motor) * (255 / 12 V), K from the model.
+const float KFF1 = 0.86, KFF2 = 0.75;
 const float DEADBAND_DEG = 0.3;
 const int PWM_MIN = 35, PWM_MAX = 255;  // overcome static friction / saturation
 
@@ -62,6 +75,7 @@ volatile bool fault = false;
 
 int16_t meas1_cdeg = 0, meas2_cdeg = 0;
 float integ1 = 0, integ2 = 0;
+float prev_t1 = 0, prev_t2 = 0, speed1 = 0, speed2 = 0;   // target speed estimate (feed-forward)
 bool at_target = false;
 Servo gripper, brake;
 
@@ -95,11 +109,14 @@ void motors_off() {
   integ1 = integ2 = 0;
 }
 
-float pi_step(float target, float meas, float kp, float ki, float &integ, float dt) {
+// One control step of one joint. Returns the signed PWM command.
+float control_step(float target, float meas, float target_speed, float kp, float ki, float kff,
+                   float &integ, float dt) {
   float e = target - meas;
-  if (fabs(e) < DEADBAND_DEG) { integ = 0; return 0; }
-  float u = kp * e + ki * integ;
-  if (fabs(u) < PWM_MAX) integ += e * dt;   // anti-windup: integrate only when not saturated
+  float u_ff = kff * target_speed;                 // voltage the motor needs to follow the motion
+  if (fabs(e) < DEADBAND_DEG && fabs(target_speed) < 1.0) { integ = 0; return 0; }   // at rest
+  float u = kp * e + ki * integ + u_ff;
+  if (fabs(u) < PWM_MAX) integ += e * dt;          // anti-windup: integrate only when not saturated
   return u;
 }
 
@@ -170,9 +187,14 @@ void loop() {
   } else {
     t1 = constrain(t1, -LIMIT1_DEG, LIMIT1_DEG);
     t2 = constrain(t2, -LIMIT2_DEG, LIMIT2_DEG);
-    drive(M1_FWD, M1_REV, pi_step(t1, q1, KP1, KI1, integ1, dt));
-    drive(M2_FWD, M2_REV, pi_step(t2, q2, KP2, KI2, integ2, dt));
+    // target speed: low-pass filtered difference of consecutive targets [deg/s]
+    speed1 = 0.8 * speed1 + 0.2 * (t1 - prev_t1) / dt;
+    speed2 = 0.8 * speed2 + 0.2 * (t2 - prev_t2) / dt;
+    drive(M1_FWD, M1_REV, control_step(t1, q1, speed1, KP1, KI1, KFF1, integ1, dt));
+    drive(M2_FWD, M2_REV, control_step(t2, q2, speed2, KP2, KI2, KFF2, integ2, dt));
   }
+  prev_t1 = t1;
+  prev_t2 = t2;
   at_target = fabs(t1 - q1) < 0.5 && fabs(t2 - q2) < 0.5;
   gripper.write(gd);
   brake.write((fl & 0x02) ? 90 : 0);

@@ -21,7 +21,7 @@ setup(
         "console_scripts": [
             "scenario = robocraft_control.scenario_runner:main",
             "cell_visualizer = robocraft_control.cell_visualizer:main",
-            "obstacle_detector = robocraft_control.obstacle_detector:main",
+            "vision_detector = robocraft_control.vision_detector:main",
         ],
     },
 )

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 from typing import Dict, List, Mapping, Optional
 
 import numpy as np
@@ -18,7 +19,17 @@ ARM_JOINTS = ("joint1", "joint2", "joint3", "joint4")
 
 
 class ExecutionError(RuntimeError):
-    pass
+    """The robot could not do what was asked (rejected goal, failed grasp, ...)."""
+
+
+@dataclass
+class Detection:
+    """An object seen by the camera, in world coordinates [m]."""
+
+    label: str        # colour class, e.g. "red", "green"
+    x: float
+    y: float
+    radius: float
 
 
 class Backend(abc.ABC):
@@ -62,6 +73,10 @@ class Backend(abc.ABC):
     def obstacles(self, timeout: float = 0.0) -> List[CircleObstacle]:
         return []
 
+    def detections(self, timeout: float = 0.0) -> List[Detection]:
+        """Everything the camera currently sees (parts and obstacles)."""
+        return []
+
     def sleep(self, seconds: float) -> None:  # noqa: B027
         pass
 
@@ -69,7 +84,8 @@ class Backend(abc.ABC):
 class DryRunBackend(Backend):
     """Kinematic stand-in: plans 'execute' instantly; records a motion log."""
 
-    def __init__(self, home: Mapping[str, np.ndarray], obstacles: Optional[List[CircleObstacle]] = None):
+    def __init__(self, home: Mapping[str, np.ndarray], obstacles: Optional[List[CircleObstacle]] = None,
+                 detections: Optional[List[Detection]] = None):
         self.q: Dict[str, np.ndarray] = {a: np.asarray(q, float).copy() for a, q in home.items()}
         self.fingers: Dict[str, float] = {a: 0.022 for a in home}
         self.held: Dict[str, bool] = {a: False for a in home}
@@ -77,6 +93,7 @@ class DryRunBackend(Backend):
         self.plans: List[Dict[str, JointTrajectory]] = []
         self.laser_on = False
         self._obstacles = obstacles or []
+        self._detections = detections or []
         self.sim_time = 0.0
 
     def get_q(self, arm: str) -> np.ndarray:
@@ -109,3 +126,6 @@ class DryRunBackend(Backend):
 
     def obstacles(self, timeout: float = 0.0) -> List[CircleObstacle]:
         return list(self._obstacles)
+
+    def detections(self, timeout: float = 0.0) -> List[Detection]:
+        return list(self._detections)
