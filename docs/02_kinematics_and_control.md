@@ -45,8 +45,8 @@ $$\mathbf p_k = \begin{bmatrix}x\\y\end{bmatrix} + R(\varphi)\,\rho\begin{bmatri
 * **Inverse kinematics (easy):** compute every leg position, then each arm solves its own IK to its leg.
 
 * **Forward kinematics:** a least-squares rigid fit of the platform through the measured gripper positions. With local leg layout $L$ and measured world positions $W$ (centroids $\bar L,\bar W$):
+$$H = (L-\bar L)^T(W-\bar W), \qquad \varphi = \text{atan2}(H_{12}-H_{21},\ H_{11}+H_{22}), \qquad \mathbf t = \bar W - R(\varphi)\,\bar L$$
 
-$$H = (L-\bar L)^T(W-\bar W), \qquad \varphi = \operatorname{atan2}(H_{12}-H_{21},\ H_{11}+H_{22}), \qquad \mathbf t = \bar W - R(\varphi)\,\bar L$$
 
 giving pose $(x,y)=\mathbf t$, yaw $\varphi$.
 
